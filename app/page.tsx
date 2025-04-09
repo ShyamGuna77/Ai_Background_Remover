@@ -1,37 +1,48 @@
-
-"use client"
+/* eslint-disable @next/next/no-img-element */
+"use client";
 import Dropzone from "react-dropzone";
 import { FileRejection } from "react-dropzone";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  const [file ,setFile] = useState<File | null>()
-  const [error,setError] = useState("")
+  const [file, setFile] = useState<File | null>();
+  const [error, setError] = useState("");
 
   const acceptedImages = {
     "image/jpeg": [".jpeg", ".png"],
   };
 
-   const maxFileSize = 5 * 1024 * 1024;
+  const maxFileSize = 5 * 1024 * 1024;
 
-   const onDrop = (acceptedFiles:Files[], rejectedFiles:FileRejection[]) => {
-    if(rejectedFiles.length>0){
-      setError("Please upload a PNG or JPEG of size below 5 mb")
-      return 
+  const onDrop = (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
+    if (rejectedFiles.length > 0) {
+      setError("Please upload a PNG or JPEG of size below 5 mb");
+      return;
     }
-     console.log(acceptedFiles)
-     setError("")
-    setFile(acceptedFiles[0])
+    console.log(acceptedFiles);
+    setError("");
+    setFile(acceptedFiles[0]);
+  };
 
-   }
+  const fileSize = (size: number) => {
+    if (size === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(size) / Math.log(k));
+    return parseFloat((size / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+    useEffect(() => {
+      let objectUrl: string | null = null;
+      if (file) {
+        objectUrl = URL.createObjectURL(file);
+      }
 
-
-
-
-
-
-
-
+      return () => {
+        if (objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+        }
+      };
+    }, [file]);
 
   return (
     <>
@@ -42,11 +53,15 @@ export default function Home() {
             Background Remover
           </h1>
         </section>
-
         {/* Dropzone Section */}
         <section className="w-full max-w-lg mx-auto mb-12">
           <div className="w-full text-center border-4 border-gray-500 border-dashed rounded-md cursor-pointer mb-2 p-5 text-gray-500 ">
-            <Dropzone onDrop={(acceptedFiles) => console.log(acceptedFiles)}>
+            <Dropzone
+              onDrop={onDrop}
+              maxSize={maxFileSize}
+              multiple={false}
+              accept={acceptedImages}
+            >
               {({ getRootProps, getInputProps }) => (
                 <div
                   {...getRootProps()}
@@ -58,12 +73,38 @@ export default function Home() {
               )}
             </Dropzone>
           </div>
+          {error && (
+            <div className="flex justify-center">
+              <p className="text-md text-yellow-500">{error}</p>
+            </div>
+          )}
+
           <div className="flex items-center justify-center mt-6">
             <button className="text-white bg-gradient-to-r from-purple-500 to-pink-500 text-center px-4 py-2 rounded-md  hover:bg-gradient-to-l">
               Remove Background
             </button>
           </div>
         </section>
+        <section className="grid grid-cols-2 gap-4 mt-4">
+          {file && (
+            <>
+              <div className="relative">
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt={file.name}
+                  className="object-cover w-full h-full"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gray-900/50 text-white text-md p-2 ">
+                  {file.name}({fileSize(file.size)})
+                </div>
+              </div>
+              <div className="flex items-center justify-center">
+                Output image here
+              </div>
+            </>
+          )}
+        </section>
+        ;
       </div>
     </>
   );
