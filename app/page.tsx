@@ -3,6 +3,7 @@
 import Dropzone from "react-dropzone";
 import { FileRejection } from "react-dropzone";
 import { useEffect, useState } from "react";
+import { FaTrashAlt } from "react-icons/fa";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>();
@@ -31,6 +32,12 @@ export default function Home() {
     const i = Math.floor(Math.log(size) / Math.log(k));
     return parseFloat((size / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
+
+  // delete fmn
+
+  const handleDelete = () => {
+    setFile(null)
+  }
     useEffect(() => {
       let objectUrl: string | null = null;
       if (file) {
@@ -94,6 +101,10 @@ export default function Home() {
                   alt={file.name}
                   className="object-cover w-full h-full"
                 />
+               <button className="absolute top-0 right-0 bg-yellow-500 text-black p-2"
+               onClick={() =>  handleDelete()}>
+                <FaTrashAlt className="w-4 h-4 hover:scale-125 duration-300 "/>
+               </button>
                 <div className="absolute bottom-0 left-0 right-0 bg-gray-900/50 text-white text-md p-2 ">
                   {file.name}({fileSize(file.size)})
                 </div>
