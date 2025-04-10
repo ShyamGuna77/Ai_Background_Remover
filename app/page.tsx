@@ -4,12 +4,13 @@ import Dropzone from "react-dropzone";
 import { FileRejection } from "react-dropzone";
 import { useEffect, useState } from "react";
 import { FaTrashAlt } from "react-icons/fa";
-import Image from "next/image";
+
 
 export default function Home() {
   const [file, setFile] = useState<File | null>();
   const [error, setError] = useState("");
   const [outPutImage ,setoutPutImage] = useState<string | null>()
+  const [base64image, setBase64Image] = useState<string | null>(null);
 
   const acceptedImages = {
     "image/jpeg": [".jpeg", ".png"],
@@ -22,11 +23,20 @@ export default function Home() {
       setError("Please upload a PNG or JPEG of size below 5 mb");
       return;
     }
-    handleDelete()
+    handleDelete();
     console.log(acceptedFiles);
     setError("");
     setFile(acceptedFiles[0]);
+    //connverting file into base64
+    const reader = new FileReader();
+    reader.readAsDataURL(acceptedFiles[0]);
+    reader.onload = () => {
+      const binaryStr = reader.result as string;
+      setBase64Image(binaryStr);
+    };
   };
+
+
 
   const fileSize = (size: number) => {
     if (size === 0) return "0 Bytes";
@@ -43,11 +53,25 @@ export default function Home() {
     setoutPutImage(null)
   }
 
-  const handlSubmit = () => {
-    setoutPutImage(
-      "https://images.unsplash.com/photo-1740131971089-8f46b62c18d0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDgwfEpwZzZLaWRsLUhrfHxlbnwwfHx8fHw%3D"
-    );
+  const handlSubmit = async () => {
+    const response = await fetch("/api/remove",{
+      method:"POST",
+      headers: {
+         "Content-Type" :"application/json"
+      },
+      body:JSON.stringify({image:base64image})
+     
+    })
+    const result = await response.json()
+    console.log(result)
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setoutPutImage(result.output)
+
   }
+
 
     useEffect(() => {
       let objectUrl: string | null = null;
