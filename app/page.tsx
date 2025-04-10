@@ -3,14 +3,16 @@
 import Dropzone from "react-dropzone";
 import { FileRejection } from "react-dropzone";
 import { useEffect, useState } from "react";
-import { FaTrashAlt } from "react-icons/fa";
-
+import { FaTrashAlt ,FaDownload} from "react-icons/fa";
+import { ClipLoader } from "react-spinners";
+import { saveAs } from "file-saver";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>();
   const [error, setError] = useState("");
-  const [outPutImage ,setoutPutImage] = useState<string | null>()
+  const [outPutImage, setoutPutImage] = useState<string | null>();
   const [base64image, setBase64Image] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const acceptedImages = {
     "image/jpeg": [".jpeg", ".png"],
@@ -36,8 +38,6 @@ export default function Home() {
     };
   };
 
-
-
   const fileSize = (size: number) => {
     if (size === 0) return "0 Bytes";
     const k = 1024;
@@ -49,42 +49,46 @@ export default function Home() {
   // delete fmn
 
   const handleDelete = () => {
-    setFile(null)
-    setoutPutImage(null)
-  }
+    setFile(null);
+    setoutPutImage(null);
+  };
+
+  const handleDownload = () => {
+    saveAs(outPutImage as string, "output.png");
+  };
 
   const handlSubmit = async () => {
-    const response = await fetch("/api/remove",{
-      method:"POST",
+    setLoading(true);
+    const response = await fetch("/api/remove", {
+      method: "POST",
       headers: {
-         "Content-Type" :"application/json"
+        "Content-Type": "application/json",
       },
-      body:JSON.stringify({image:base64image})
-     
-    })
-    const result = await response.json()
-    console.log(result)
-      if (result.error) {
-        setError(result.error);
-        return;
+      body: JSON.stringify({ image: base64image }),
+    });
+    const result = await response.json();
+    console.log(result);
+    if (result.error) {
+      setError(result.error);
+      setLoading(false);
+      return;
+    }
+    setoutPutImage(result.output);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    if (file) {
+      objectUrl = URL.createObjectURL(file);
+    }
+
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
       }
-      setoutPutImage(result.output)
-
-  }
-
-
-    useEffect(() => {
-      let objectUrl: string | null = null;
-      if (file) {
-        objectUrl = URL.createObjectURL(file);
-      }
-
-      return () => {
-        if (objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-        }
-      };
-    }, [file]);
+    };
+  }, [file]);
 
   return (
     <>
@@ -123,9 +127,13 @@ export default function Home() {
 
           <div className="flex items-center justify-center mt-6">
             <button
-             onClick={handlSubmit}
-             className="text-white bg-gradient-to-r from-purple-500 to-pink-500 text-center px-4 py-2 rounded-md  hover:bg-gradient-to-l">
-              Remove Background
+              onClick={handlSubmit}
+              disabled={loading}
+              className={`text-white text-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:bg-gradient-to-l rounded-lg px-4 py-2 text-center mb-2 ${
+                loading && "cursor-progress"
+              }`}
+            >
+              Remove background
             </button>
           </div>
         </section>
@@ -138,18 +146,34 @@ export default function Home() {
                   alt={file.name}
                   className="object-cover w-full h-full"
                 />
-               <button className="absolute top-0 right-0 bg-yellow-500 text-black p-2"
-               onClick={() =>  handleDelete()}>
-                <FaTrashAlt className="w-4 h-4 hover:scale-125 duration-300 "/>
-               </button>
+                <button
+                  className="absolute top-0 right-0 bg-yellow-500 text-black p-2"
+                  onClick={() => handleDelete()}
+                >
+                  <FaTrashAlt className="w-4 h-4 hover:scale-125 duration-300 " />
+                </button>
                 <div className="absolute bottom-0 left-0 right-0 bg-gray-900/50 text-white text-md p-2 ">
-                  {file.name}{" "}({fileSize(file.size)})
+                  {file.name} ({fileSize(file.size)})
                 </div>
               </div>
-              <div className="flex items-center justify-center">
-               {outPutImage && (
-                <img src = {outPutImage} alt="randomInage" className = "object-cover w-full h-full" />
-               )}
+              <div className="flex items-center justify-center relative">
+                {loading && (
+                  <ClipLoader size={35} color="#8B5CF6" loading={loading} />
+                )}
+                {outPutImage && (
+                  <>
+                  <img
+                    src={outPutImage}
+                    alt="randomInage"
+                    className="object-cover w-full h-full"
+                  />
+                  <button 
+                  onClick={handleDownload}
+                  className="top-0 right-0 bg-yellow-500 text-black p-2 absolute hover:scale-105">
+                    <FaDownload />
+                  </button>
+                  </>
+                )}
               </div>
             </>
           )}
