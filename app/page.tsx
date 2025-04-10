@@ -4,10 +4,12 @@ import Dropzone from "react-dropzone";
 import { FileRejection } from "react-dropzone";
 import { useEffect, useState } from "react";
 import { FaTrashAlt } from "react-icons/fa";
+import Image from "next/image";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>();
   const [error, setError] = useState("");
+  const [outPutImage ,setoutPutImage] = useState<string | null>()
 
   const acceptedImages = {
     "image/jpeg": [".jpeg", ".png"],
@@ -20,6 +22,7 @@ export default function Home() {
       setError("Please upload a PNG or JPEG of size below 5 mb");
       return;
     }
+    handleDelete()
     console.log(acceptedFiles);
     setError("");
     setFile(acceptedFiles[0]);
@@ -37,7 +40,15 @@ export default function Home() {
 
   const handleDelete = () => {
     setFile(null)
+    setoutPutImage(null)
   }
+
+  const handlSubmit = () => {
+    setoutPutImage(
+      "https://images.unsplash.com/photo-1740131971089-8f46b62c18d0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHx0b3BpYy1mZWVkfDgwfEpwZzZLaWRsLUhrfHxlbnwwfHx8fHw%3D"
+    );
+  }
+
     useEffect(() => {
       let objectUrl: string | null = null;
       if (file) {
@@ -87,7 +98,9 @@ export default function Home() {
           )}
 
           <div className="flex items-center justify-center mt-6">
-            <button className="text-white bg-gradient-to-r from-purple-500 to-pink-500 text-center px-4 py-2 rounded-md  hover:bg-gradient-to-l">
+            <button
+             onClick={handlSubmit}
+             className="text-white bg-gradient-to-r from-purple-500 to-pink-500 text-center px-4 py-2 rounded-md  hover:bg-gradient-to-l">
               Remove Background
             </button>
           </div>
@@ -106,11 +119,13 @@ export default function Home() {
                 <FaTrashAlt className="w-4 h-4 hover:scale-125 duration-300 "/>
                </button>
                 <div className="absolute bottom-0 left-0 right-0 bg-gray-900/50 text-white text-md p-2 ">
-                  {file.name}({fileSize(file.size)})
+                  {file.name}{" "}({fileSize(file.size)})
                 </div>
               </div>
               <div className="flex items-center justify-center">
-                Output image here
+               {outPutImage && (
+                <img src = {outPutImage} alt="randomInage" className = "object-cover w-full h-full" />
+               )}
               </div>
             </>
           )}
